@@ -1,4 +1,4 @@
-import React from 'react'
+import React, {useContext, useState, useEffect} from 'react'
 import Link from 'next/link'
 import Head from 'next/head'
 import styles from "../../styles/coffee-store.module.css"
@@ -8,6 +8,9 @@ import nearMe from "../../public/icons/nearMe.svg"
 import places from "../../public/icons/places.svg"
 import upvote from "../../public/icons/upvote.svg"
 import { fetchCoffeeStores } from '../../lib/coffee-stores'
+import {StoreContext } from '../../store/store-context'
+import { useRouter } from 'next/router'
+
 
 export async function getStaticPaths() {
   const coffeeStores  = await fetchCoffeeStores()
@@ -17,22 +20,44 @@ export async function getStaticPaths() {
 
   return {
     paths,
-    fallback: false, 
+    fallback: true, 
   }
 }
 
 export async function getStaticProps(staticProps) {
   const coffeeStores  = await fetchCoffeeStores()
   const params = staticProps.params
+  const findCoffeeStoreById = coffeeStores.find((coffeeStore) => coffeeStore.id.toString() === params.id)
     return {
       props: {
-        coffeeStores: coffeeStores.find((coffeeStore) => coffeeStore.id.toString() === params.id),
+        coffeeStores: findCoffeeStoreById ? findCoffeeStoreById : {}
       },
     }
   }
 
-const CoffeStore = (props) => {
-  const {name,address,locality, imgUrl} = props.coffeeStores
+const CoffeStore = (initialProps) => {
+
+  const router = useRouter()
+
+  if(router.isFallback) {
+    return <div>Loading...</div>
+  }
+
+  const id = router.query.id  
+
+  const {state: {coffeeStores}} = useContext(StoreContext)
+
+  const [coffeeStore, setCoffeeStore] = useState(initialProps.coffeeStores)
+
+  useEffect(() => {
+    if (coffeeStores.length > 0) {
+      const findCoffeeStoreById = coffeeStores.find((coffeeStore) => coffeeStore.id.toString() === id)
+      setCoffeeStore(findCoffeeStoreById)
+    }
+  }, [id])
+      
+  
+  const {name,address,locality, imgUrl} = coffeeStore
 
   const handleUpvoteButton = () => {}
 

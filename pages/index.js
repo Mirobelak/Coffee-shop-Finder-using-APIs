@@ -4,6 +4,9 @@ import Banner from '../components/Banner'
 import Image from "next/image"
 import Card from '../components/Card'
 import { fetchCoffeeStores } from '../lib/coffee-stores'
+import useTrackLocation from '../hooks/use-track-location'
+import { useEffect, useState, useContext } from 'react'
+import { ACTION_TYPES, StoreContext } from '../store/store-context'
 
 
 export async function getStaticProps(context) {
@@ -18,6 +21,48 @@ export async function getStaticProps(context) {
 }
 
 export default function Home(props) {
+
+  // const [cofeeStores, setCoffeeStores] = useState("")
+  const [error, setError] = useState(null)
+
+  const {dispatch,state } = useContext(StoreContext);
+
+  const {coffeeStores, latLong} = state;
+
+  const {handleTrackLocation, errorMsg, isTracking} = useTrackLocation()
+
+  const handleOnBannerClick = () => {
+    handleTrackLocation()
+
+    console.log(errorMsg)
+
+  }
+      
+  useEffect(() => {
+      async function setCoffeeStoresByLocation() {
+            if (latLong) {
+              try {
+                const fetchedCoffeeStore = await fetchCoffeeStores(latLong, 20)
+                console.log({fetchedCoffeeStore})
+                dispatch({
+                  type: ACTION_TYPES.SET_COFFEE_STORES,
+                  payload: {
+                    coffeeStores: fetchedCoffeeStore,
+                  },
+                })
+                // setCoffeeStores(fetchedCoffeeStore)
+              }
+              catch(error) {
+                console.log({error})
+                setError(error.message)
+            }
+          }
+      }
+      
+      setCoffeeStoresByLocation();
+      },[latLong])
+ 
+
   return (
     <div className={styles.container}>
       <Head>
@@ -30,10 +75,23 @@ export default function Home(props) {
         <h1 className={styles.title}>
           Welcome Cafe
         </h1>
-        <Banner/>
+        <Banner btnText={isTracking ? "Určujem pozíciu..." : "Nájdi ☕️ v okolí" } handleOnBannerClick={handleOnBannerClick}/>
+        {errorMsg && `Something went wrong ${errorMsg}`}
+        {error && `Something went wrong ${error}`}
         <div className={styles.heroImage}>
         <Image src="/static/hero-image.png" width={700} height={400}/>
         </div>
+
+        {coffeeStores.length > 0 &&
+        (<> <h2 className={styles.heading2}>Kaviarne v tvojom okolí </h2>
+        <div className={styles.cardLayout}>
+          {coffeeStores.map((coffeeStore) => (
+             <Card key={coffeeStore.id} name={coffeeStore.name} imgUrl={coffeeStore.imgUrl ||  "https://images.unsplash.com/photo-1504753793650-d4a2b783c15e?ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&ixlib=rb-1.2.1&auto=format&fit=crop&w=2000&q=80"} href={`/coffee-store/${coffeeStore.id}`} className={styles.card}  />
+          ))}
+       
+        </div></>)
+  }
+
         {props.coffeeStores.length > 0 ? 
         (<> <h2 className={styles.heading2}>Trenčín coffee stores</h2>
         <div className={styles.cardLayout}>
