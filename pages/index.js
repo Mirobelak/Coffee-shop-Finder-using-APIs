@@ -22,7 +22,6 @@ export async function getStaticProps(context) {
 
 export default function Home(props) {
 
-  // const [cofeeStores, setCoffeeStores] = useState("")
   const [error, setError] = useState(null)
 
   const {dispatch,state } = useContext(StoreContext);
@@ -42,15 +41,15 @@ export default function Home(props) {
       async function setCoffeeStoresByLocation() {
             if (latLong) {
               try {
-                const fetchedCoffeeStore = await fetchCoffeeStores(latLong, 20)
-                console.log({fetchedCoffeeStore})
+                const fetchedCoffeeStore = await fetch("/api/getCoffeeStoresByLocation?latLong=" + latLong + "&limit=" + 20)
+                const CoffeeStoreData = await fetchedCoffeeStore.json()
                 dispatch({
                   type: ACTION_TYPES.SET_COFFEE_STORES,
                   payload: {
-                    coffeeStores: fetchedCoffeeStore,
+                    coffeeStores: CoffeeStoreData,
                   },
                 })
-                // setCoffeeStores(fetchedCoffeeStore)
+                setError("")
               }
               catch(error) {
                 console.log({error})
