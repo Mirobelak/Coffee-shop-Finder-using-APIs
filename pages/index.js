@@ -32,9 +32,6 @@ export default function Home(props) {
 
   const handleOnBannerClick = () => {
     handleTrackLocation()
-
-    console.log(errorMsg)
-
   }
 
 

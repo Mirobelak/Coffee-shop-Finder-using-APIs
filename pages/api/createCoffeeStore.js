@@ -1,4 +1,4 @@
-import {table, getMinifiedRecords} from '../../lib/airtable'
+import {table, getMinifiedRecords,findRecordByFilter} from '../../lib/airtable'
 
 const createCoffeeStore = async (req, res) => {
     
@@ -8,11 +8,9 @@ const createCoffeeStore = async (req, res) => {
 
         try {
             if(id) {
-                const findCoffeeStoreRecords = await table.select({
-                    filterByFormula: `id="${id}"`}).firstPage()
-            
-                if (findCoffeeStoreRecords.length > 0) {
-                    const records = getMinifiedRecords(findCoffeeStoreRecords)
+                const records = await findRecordByFilter(id);
+
+                if (records.length > 0) {
                     res.json(records) 
                 } else {
                     if(name ) {
@@ -24,7 +22,7 @@ const createCoffeeStore = async (req, res) => {
                                     address,
                                     locality,
                                     imgUrl,
-                                    upvote: 0,
+                                    upvote : 0,
                                 }
                             }
                         ], function(err, records) {
@@ -33,7 +31,6 @@ const createCoffeeStore = async (req, res) => {
                                 return;
                             }
                             records.forEach(function (record) {
-                                console.log(record.getId());
                             });
                         });
 
@@ -58,9 +55,8 @@ const createCoffeeStore = async (req, res) => {
             return res.status(500).json({message: "Error with creatin or finding coffee store"})
         }
     }
-
-
 }
+    
 
 
 export default createCoffeeStore

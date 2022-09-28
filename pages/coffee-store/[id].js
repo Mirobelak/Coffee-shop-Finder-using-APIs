@@ -6,10 +6,11 @@ import Image from 'next/image'
 import cls from 'classnames'
 import nearMe from "../../public/icons/nearMe.svg"
 import places from "../../public/icons/places.svg"
-import upvote from "../../public/icons/upvote.svg"
+import upvoteIcon from "../../public/icons/upvote.svg"
 import { fetchCoffeeStores } from '../../lib/coffee-stores'
 import {StoreContext } from '../../store/store-context'
 import { useRouter } from 'next/router'
+import useSwr from 'swr'
 
 
 export async function getStaticPaths() {
@@ -49,6 +50,8 @@ const CoffeStore = (initialProps) => {
 
   const [coffeeStore, setCoffeeStore] = useState(initialProps.coffeeStores)
 
+  const fetcher = (url) => fetch(url).then((res) => res.json());
+
   const handleCreateCoffeeStore = async (coffeeStores) => {
     try {
       const {
@@ -70,8 +73,7 @@ const CoffeStore = (initialProps) => {
             })
         })
 
-        dbCoffeeStores = response.json()
-        console.log(dbCoffeeStores)
+        dbCoffeeStores = await response.json()
     }
     catch(err) {
       console.log("Error with creating coffee store", err)
@@ -95,7 +97,42 @@ const CoffeStore = (initialProps) => {
   
   const {name,address,locality, imgUrl} = coffeeStore
 
-  const handleUpvoteButton = () => {}
+  const [votingCount, setVotingCount] = useState(0)
+
+  const {data, error} = useSwr(`/api/getCoffeeStoreById?id=${id}`, fetcher)
+
+  useEffect(() => {
+    if(data) {
+      setCoffeeStore(data[0])
+      setVotingCount(data[0].upvote)
+    }
+  }, [data])
+
+  const handleUpvoteButton = async () => {
+
+    try {
+        const response = await fetch('/api/upvoteCoffeeStoreById', {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              id,
+            })
+        })
+
+        dbCoffeeStores = await response.json()
+        let updatedVotingCount = votingCount + 1
+        setVotingCount(updatedVotingCount)
+    }
+    catch(err) {
+      console.log("Error with updating coffee store", err)
+    }
+
+    
+  }
+
+  if (error) { return <div>failed to load coffee stores</div> }
 
   return (
       <div className={styles.layout}>
@@ -131,8 +168,8 @@ const CoffeStore = (initialProps) => {
             <p className={styles.text}>{locality}</p>
             </div>
           <div className={styles.iconWrapper}>
-            <Image src={upvote} width="24" height="24" />
-            <p className={styles.text}>10</p>
+            <Image src={upvoteIcon} width="24" height="24" />
+            <p className={styles.text}>{votingCount}</p>
             </div>
           <button className={styles.upvoteButton} onClick={handleUpvoteButton} >
             Up vote !
