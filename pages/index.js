@@ -39,25 +39,24 @@ export default function Home(props) {
       async function setCoffeeStoresByLocation() {
             if (latLong) {
               try {
-                const fetchedCoffeeStore = await fetch("/api/getCoffeeStoresByLocation?latLong=" + latLong + "&limit=" + 20)
-                const CoffeeStoreData = await fetchedCoffeeStore.json()
+                const response = await fetch("/api/getCoffeeStoresByLocation?latLong=" + latLong + "&limit=" + 20)
+                const coffeeStores = await response.json()
                 dispatch({
                   type: ACTION_TYPES.SET_COFFEE_STORES,
                   payload: {
-                    coffeeStores: CoffeeStoreData,
+                    coffeeStores,
                   },
                 })
                 setError("")
               }
               catch(error) {
-                console.log({error})
                 setError(error.message)
             }
           }
       }
       
       setCoffeeStoresByLocation();
-      },[latLong])
+      },[latLong, dispatch])
  
 
   return (
@@ -76,7 +75,7 @@ export default function Home(props) {
         {errorMsg && `Something went wrong ${errorMsg}`}
         {error && `Something went wrong ${error}`}
         <div className={styles.heroImage}>
-        <Image src="/static/hero-image.png" width={700} height={400}/>
+        <Image src="/static/hero-image.png" alt="hero-image-" width={700} height={400}/>
         </div>
 
         {coffeeStores.length > 0 &&

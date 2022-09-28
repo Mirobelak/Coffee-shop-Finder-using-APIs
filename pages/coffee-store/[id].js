@@ -11,6 +11,7 @@ import { fetchCoffeeStores } from '../../lib/coffee-stores'
 import {StoreContext } from '../../store/store-context'
 import { useRouter } from 'next/router'
 import useSwr from 'swr'
+import {fetcher} from "../../utils/fetcher"
 
 
 export async function getStaticPaths() {
@@ -40,17 +41,11 @@ const CoffeStore = (initialProps) => {
 
   const router = useRouter()
 
-  if(router.isFallback) {
-    return <div>Loading...</div>
-  }
-
   const id = router.query.id  
 
+  const [coffeeStore, setCoffeeStore] = useState(initialProps.coffeeStores || {})
+
   const {state: {coffeeStores}} = useContext(StoreContext)
-
-  const [coffeeStore, setCoffeeStore] = useState(initialProps.coffeeStores)
-
-  const fetcher = (url) => fetch(url).then((res) => res.json());
 
   const handleCreateCoffeeStore = async (coffeeStores) => {
     try {
@@ -64,16 +59,16 @@ const CoffeStore = (initialProps) => {
             },
             body: JSON.stringify({
               id,
-              name,
-              upvote, 
+              name: name || "",
+              upvote: upvote || 0, 
               address: address || "",
               locality : locality || "", 
-              imgUrl, 
+              imgUrl : imgUrl || "", 
               
             })
         })
 
-        dbCoffeeStores = await response.json()
+        const dbCoffeeStores = await response.json()
     }
     catch(err) {
       console.log("Error with creating coffee store", err)
@@ -92,24 +87,31 @@ const CoffeStore = (initialProps) => {
     } else {
       handleCreateCoffeeStore(initialProps.coffeeStores)
     }
-  }, [id,initialProps,initialProps.coffeeStores,])
-      
-  
-  const {name,address,locality, imgUrl} = coffeeStore
+  }, [id,initialProps,initialProps.coffeeStores,coffeeStores])
 
+  const {
+    address = "",
+    name = "",
+    locality = "",
+    imgUrl = "",
+  } = coffeeStore;
+      
   const [votingCount, setVotingCount] = useState(0)
 
   const {data, error} = useSwr(`/api/getCoffeeStoreById?id=${id}`, fetcher)
 
   useEffect(() => {
-    if(data) {
+    if(data && data.length > 0) {
       setCoffeeStore(data[0])
       setVotingCount(data[0].upvote)
     }
   }, [data])
 
-  const handleUpvoteButton = async () => {
+  if (router.isFallback) {
+    return <div>Loading...</div>;
+  }
 
+  const handleUpvoteButton = async () => {
     try {
         const response = await fetch('/api/upvoteCoffeeStoreById', {
             method: 'PUT',
@@ -120,16 +122,16 @@ const CoffeStore = (initialProps) => {
               id,
             })
         })
-
-        dbCoffeeStores = await response.json()
+        const dbCoffeeStores = await response.json()
+        
+        if (dbCoffeeStores && dbCoffeeStores.length > 0) {
         let updatedVotingCount = votingCount + 1
         setVotingCount(updatedVotingCount)
+        }
     }
     catch(err) {
       console.log("Error with updating coffee store", err)
     }
-
-    
   }
 
   if (error) { return <div>failed to load coffee stores</div> }
@@ -160,15 +162,15 @@ const CoffeStore = (initialProps) => {
 
         <div className={cls("glass", styles.col2)}>
           <div className={styles.iconWrapper}>
-            <Image src={nearMe} width="24" height="24" />
+            <Image src={nearMe} alt="near-me-icon" width="24" height="24" />
             <p className={styles.text}>{address}</p>
             </div>
           <div className={styles.iconWrapper}>
-            <Image src={places} width="24" height="24" />
+            <Image src={places} alt="place-icon" width="24" height="24" />
             <p className={styles.text}>{locality}</p>
             </div>
           <div className={styles.iconWrapper}>
-            <Image src={upvoteIcon} width="24" height="24" />
+            <Image src={upvoteIcon} alt="upvote-icon" width="24" height="24" />
             <p className={styles.text}>{votingCount}</p>
             </div>
           <button className={styles.upvoteButton} onClick={handleUpvoteButton} >
