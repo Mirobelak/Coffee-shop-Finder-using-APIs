@@ -25,9 +25,6 @@ class MyDocument extends Document {
           ></link>
                 </Head>
                 <body>
-                    <Main>
-
-                    </Main>
                     <NextScript/>
                     </body>
             </Html>

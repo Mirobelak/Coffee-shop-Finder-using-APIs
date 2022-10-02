@@ -14,7 +14,7 @@ const upvoteCoffeeStoreById = async (req, res) => {
 
                 const record = records[0]
 
-                const calculateUpvote = parseInt(record.upvote) + parseInt(1)
+                const calculateUpvote = parseInt(record.upvote) + 1
 
                 // update the record
 

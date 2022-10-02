@@ -1,4 +1,5 @@
 import { createApi } from 'unsplash-js';
+import React from 'react';
 
 const unsplash = createApi({
   accessKey: process.env.NEXT_PUBLIC_UNSPLASH_ACCESS_KEY,
